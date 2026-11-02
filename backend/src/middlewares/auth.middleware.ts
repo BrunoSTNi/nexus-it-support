@@ -9,7 +9,7 @@ export const ensureAuthenticated = (req: Request, res: Response, next: NextFunct
     return;
   }
 
-  const [, token] = authHeader.split(' ');
+  const [, token] = (authHeader as string).split(' ');
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
