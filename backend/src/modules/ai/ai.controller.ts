@@ -9,7 +9,7 @@ export class AIController {
       const { description } = req.body;
       if (!description) throw new Error('Descrição do problema é obrigatória');
 
-      const classification = await aiService.classifyTicket(description);
+      const classification = await AIService.classifyTicket(description);
       res.json({ success: true, data: classification });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
