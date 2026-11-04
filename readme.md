@@ -1,1 +1,57 @@
-# README.mdNEXUS - Intelligent IT Support   O NEXUS é uma plataforma web de suporte de TI (HelpDesk) de nova geração. O sistema utiliza Inteligência Artificial como um assistente ("co-piloto") para acelerar a triagem, o diagnóstico e a abertura de chamados via linguagem natural, mantendo as decisões finais sob controle da equipe técnica.   Público-AlvoUSER (Colaboradores): Funcionários que necessitam de suporte rápido.   TECHNICIAN (Equipe de TI): Analistas de níveis 1, 2 e 3 que realizam o atendimento.   ADMIN (Gestores): Coordenadores focados em métricas e melhoria contínua.   Stack Tecnológica   Frontend: React (Vite/TypeScript/Tailwind CSS)Backend: Node.js (Express)Banco de Dados: PostgreSQL (via Docker)ORM: PrismaPré-requisitosNode.js (v22.x a v24.x)Docker e Docker ComposePostgreSQL (v15 a v16 via contêiner)Como Executar o Projeto LocalmenteClone o repositório e acesse a pasta raiz.Suba a infraestrutura do banco de dados:docker-compose up -dInstale as dependências do backend e frontend:npm installConfigure as variáveis de ambiente (.env) com as credenciais do banco e a chave da API de IA.Execute as migrações do banco de dados:npx prisma migrate devInicie os servidores de desenvolvimento:npm run dev# docs/arquitetura.mdArquitetura do SistemaO sistema adota uma arquitetura modular em camadas, fortemente inspirada nos princípios de Domain-Driven Design (DDD), garantindo a separação de responsabilidades.   Fluxo de Dados e CamadasFrontend (React/Vite): Responsável pela interface minimalista e centrada na intenção do usuário.   Controllers: Gerenciam rotas e validações de entrada.   Services: Contêm as regras de negócio e a integração com provedores externos. A comunicação com a IA é abstraída e isolada na camada AIService.   Repositories: Gerenciam as consultas via Prisma ORM.   Database (PostgreSQL): Armazena as entidades centrais e relacionamentos.   Modelagem de Dados (Entidades Principais)   User & Category: Gerencia credenciais, perfis de acesso (RBAC) e as categorias de problemas.Ticket: Armazena os chamados com campos para título, descrição, resumo, status, prioridade e resolução.Interaction: Registra a timeline de mensagens dentro de cada chamado.KnowledgeArticle: Base de conhecimento extraída a partir de resoluções de chamados.Mitigação de Riscos Técnicos   Alucinação da IA: Para evitar que o sistema quebre por receber JSONs inválidos, os retornos do AIService utilizam "Structured Outputs" e validação estrita (via bibliotecas como Zod) antes da persistência no banco de dados.Busca de Chamados Semelhantes: O MVP emprega o recurso de Full Text Search do próprio PostgreSQL baseado em palavras-chave, dispensando bancos vetoriais complexos nesta fase inicial.# DOCUMENTACAO_IA.md(Tabela de registro obrigatório das interações com agentes de IA durante o desenvolvimento, conforme diretrizes do laboratório)Problema / RequisitoPrompts UtilizadosRefinamento (Iterações)Decisão de EngenhariaSetup Base Backend (Exemplo)"Atue como um Engenheiro de Software Sênior. Estou iniciando um projeto Node.js. Escreva um script de terminal que: 1. Inicialize package.json; 2. Instale express, pg, @prisma/client; 3. Instale nodemon, prisma; 4. Inicialize o prisma; 5. Crie src/controllers, src/routes, src/models."O código funcionou na primeira execução. Foi necessário apenas ajustar manualmente o arquivo .env para corresponder às credenciais do docker-compose.yml.Aprovado pela automação e padronização rápida da estrutura de pastas, garantindo as dependências corretas exigidas no escopo da disciplina.Criação do docker-compose(Preencher durante o desenvolvimento)(Preencher durante o desenvolvimento)(Preencher durante o desenvolvimento)Módulo AIService(Preencher durante o desenvolvimento)(Preencher durante o desenvolvimento)(Preencher durante o desenvolvimento)Integração Frontend/Backend(Preencher durante o desenvolvimento)(Preencher durante o desenvolvimento)(Preencher durante o desenvolvimento)
+# NEXUS — Intelligent IT Support
+
+Plataforma inovadora de HelpDesk e suporte de TI impulsionada por inteligência artificial. O **NEXUS** automatiza a triagem, categorização e sumarização de chamados técnicos, acelerando o tempo de atendimento e auxiliando técnicos e administradores na tomada de decisão.
+
+---
+
+## 🚀 Visão do Produto
+
+O NEXUS foi desenhado para otimizar o fluxo de atendimento em departamentos de TI corporativos e acadêmicos. Ele atende a três perfis principais de usuários:
+*   **Usuários (Requerentes):** Abertura simplificada de chamados através de linguagem natural. A IA analisa o problema instantaneamente, preenche título, categoria e prioridade, e sugere artigos da base de conhecimento antes mesmo do chamado ser enviado.
+*   **Técnicos (Nível 1 e 2):** Triagem inteligente, visualização de interações em tempo real, histórico de diagnósticos e ferramentas de suporte à decisão técnica.
+*   **Administradores:** Monitoramento de métricas do sistema, painéis gerenciais e controle total sobre o ecossistema de atendimento.
+
+---
+
+## 🛠️ Stack Tecnológica
+
+O projeto foi construído utilizando uma arquitetura moderna e desacoplada, garantindo alta performance, tipagem estática e manutenibilidade:
+
+*   **Frontend:** 
+    *   React (com Vite para bundling ultrarrápido)
+    *   TypeScript (Tipagem estrita)
+    *   Tailwind CSS (Estilização responsiva e moderna)
+    *   Lucide React (Ícones vetoriais)
+*   **Backend:**
+    *   Node.js (Versão exigida: **22.x a 24.x**)
+    *   Express.js (Framework web)
+    *   TypeScript
+    *   Google Generative AI SDK (`@google/generative-ai`) para integração com o Gemini.
+*   **Banco de Dados & ORM:**
+    *   PostgreSQL (Versão exigida: **15.x a 16.x**, rodando via Docker)
+    *   Prisma ORM (Gerenciamento de migrações e persistência de dados)
+
+---
+
+## 📦 Pré-requisitos
+
+Certifique-se de ter as seguintes ferramentas instaladas em sua máquina:
+*   Node.js (v22.x ou superior)
+*   Docker e Docker Compose (para o container PostgreSQL)
+*   Gerenciador de pacotes `npm` ou `yarn`
+
+---
+
+## ⚙️ Como Executar Localmente
+
+Siga o passo a passo abaixo para colocar o ambiente completo em funcionamento:
+
+### 1. Clonar o repositório e configurar o ambiente
+Abra o seu terminal na pasta raiz do projeto.
+
+Configure as variáveis de ambiente do backend criando um arquivo `.env` dentro da pasta `backend/`:
+```env
+PORT=3333
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/nexus_db?schema=public"
+JWT_SECRET="nexus_secret_jwt_key_2026"
+GEMINI_API_KEY="sua_chave_da_api_do_gemini_aqui"
