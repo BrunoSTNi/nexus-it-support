@@ -45,4 +45,33 @@ export class TicketController {
       return res.status(400).json({ success: false, message: error.message });
     }
   }
+
+  // Adicione este método para buscar o chamado por ID
+  async getById(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const ticket = await ticketService.findById(id as string);
+
+      if (!ticket) {
+        return res.status(404).json({ success: false, message: 'Chamado não encontrado' });
+      }
+
+      return res.json({ success: true, data: ticket });
+    } catch (error: any) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  // Adicione este método para alterar o status do chamado (Assumir / Resolver)
+  async updateStatus(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      const updatedTicket = await ticketService.updateStatus(id as string, status);
+      return res.json({ success: true, data: updatedTicket });
+    } catch (error: any) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+  }
 }

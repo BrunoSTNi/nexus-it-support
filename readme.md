@@ -1,1 +1,115 @@
-# README.mdNEXUS - Intelligent IT Support   O NEXUS é uma plataforma web de suporte de TI (HelpDesk) de nova geração. O sistema utiliza Inteligência Artificial como um assistente ("co-piloto") para acelerar a triagem, o diagnóstico e a abertura de chamados via linguagem natural, mantendo as decisões finais sob controle da equipe técnica.   Público-AlvoUSER (Colaboradores): Funcionários que necessitam de suporte rápido.   TECHNICIAN (Equipe de TI): Analistas de níveis 1, 2 e 3 que realizam o atendimento.   ADMIN (Gestores): Coordenadores focados em métricas e melhoria contínua.   Stack Tecnológica   Frontend: React (Vite/TypeScript/Tailwind CSS)Backend: Node.js (Express)Banco de Dados: PostgreSQL (via Docker)ORM: PrismaPré-requisitosNode.js (v22.x a v24.x)Docker e Docker ComposePostgreSQL (v15 a v16 via contêiner)Como Executar o Projeto LocalmenteClone o repositório e acesse a pasta raiz.Suba a infraestrutura do banco de dados:docker-compose up -dInstale as dependências do backend e frontend:npm installConfigure as variáveis de ambiente (.env) com as credenciais do banco e a chave da API de IA.Execute as migrações do banco de dados:npx prisma migrate devInicie os servidores de desenvolvimento:npm run dev# docs/arquitetura.mdArquitetura do SistemaO sistema adota uma arquitetura modular em camadas, fortemente inspirada nos princípios de Domain-Driven Design (DDD), garantindo a separação de responsabilidades.   Fluxo de Dados e CamadasFrontend (React/Vite): Responsável pela interface minimalista e centrada na intenção do usuário.   Controllers: Gerenciam rotas e validações de entrada.   Services: Contêm as regras de negócio e a integração com provedores externos. A comunicação com a IA é abstraída e isolada na camada AIService.   Repositories: Gerenciam as consultas via Prisma ORM.   Database (PostgreSQL): Armazena as entidades centrais e relacionamentos.   Modelagem de Dados (Entidades Principais)   User & Category: Gerencia credenciais, perfis de acesso (RBAC) e as categorias de problemas.Ticket: Armazena os chamados com campos para título, descrição, resumo, status, prioridade e resolução.Interaction: Registra a timeline de mensagens dentro de cada chamado.KnowledgeArticle: Base de conhecimento extraída a partir de resoluções de chamados.Mitigação de Riscos Técnicos   Alucinação da IA: Para evitar que o sistema quebre por receber JSONs inválidos, os retornos do AIService utilizam "Structured Outputs" e validação estrita (via bibliotecas como Zod) antes da persistência no banco de dados.Busca de Chamados Semelhantes: O MVP emprega o recurso de Full Text Search do próprio PostgreSQL baseado em palavras-chave, dispensando bancos vetoriais complexos nesta fase inicial.# DOCUMENTACAO_IA.md(Tabela de registro obrigatório das interações com agentes de IA durante o desenvolvimento, conforme diretrizes do laboratório)Problema / RequisitoPrompts UtilizadosRefinamento (Iterações)Decisão de EngenhariaSetup Base Backend (Exemplo)"Atue como um Engenheiro de Software Sênior. Estou iniciando um projeto Node.js. Escreva um script de terminal que: 1. Inicialize package.json; 2. Instale express, pg, @prisma/client; 3. Instale nodemon, prisma; 4. Inicialize o prisma; 5. Crie src/controllers, src/routes, src/models."O código funcionou na primeira execução. Foi necessário apenas ajustar manualmente o arquivo .env para corresponder às credenciais do docker-compose.yml.Aprovado pela automação e padronização rápida da estrutura de pastas, garantindo as dependências corretas exigidas no escopo da disciplina.Criação do docker-compose(Preencher durante o desenvolvimento)(Preencher durante o desenvolvimento)(Preencher durante o desenvolvimento)Módulo AIService(Preencher durante o desenvolvimento)(Preencher durante o desenvolvimento)(Preencher durante o desenvolvimento)Integração Frontend/Backend(Preencher durante o desenvolvimento)(Preencher durante o desenvolvimento)(Preencher durante o desenvolvimento)
+# 🚀 NEXUS · Intelligent IT Support Platform
+
+O **NEXUS** é uma plataforma web full-stack de suporte de TI (HelpDesk) de nova geração. O sistema utiliza Inteligência Artificial como um assistente ("co-piloto") para acelerar a triagem, o diagnóstico preditivo e a abertura de chamados via linguagem natural, mantendo as decisões finais sob controle rigoroso da equipe técnica.
+
+---
+
+## 👥 Público-Alvo e Perfis (RBAC)
+
+* **USER (Colaboradores):** Funcionários que necessitam de suporte rápido, abertura simplificada de chamados e consulta à base de conhecimento.
+* **TECHNICIAN (Equipe de TI):** Analistas que gerenciam a fila de atendimento, executam diagnósticos assistidos por IA e atualizam o status dos incidentes.
+* **ADMIN (Gestores):** Coordenadores focados na Visão Geral do suporte, métricas em tempo real, auditoria e gestão de usuários do workspace.
+
+---
+
+## 🛠️ Stack Tecnológica
+
+* **Frontend:** React (Vite, TypeScript, Tailwind CSS, Lucide React, React Router DOM).
+* **Backend:** Node.js, Express, TypeScript.
+* **Banco de Dados:** PostgreSQL (via Docker / ambiente dedicado).
+* **ORM:** Prisma ORM.
+
+---
+
+## ✨ Funcionalidades Desenvolvidas
+
+1. **Visão Geral do Suporte (Dashboard Principal):**
+   * Indicadores em tempo real conectados ao banco de dados PostgreSQL (Chamados abertos, em atendimento, resolvidos no dia e tempo médio).
+   * Seção de **Insights do NEXUS**, identificando gargalos operacionais e padrões recorrentes.
+   * Gráfico dinâmico de distribuição de chamados por categoria gerado a partir dos dados reais.
+
+2. **Fila de Atendimento:**
+   * Listagem completa de chamados com cartões de métricas consolidadas (Total, Abertos, Em andamento, Aguardando, Críticos).
+   * Barra de filtros avançados por status, prioridade e busca por texto/solicitante.
+
+3. **Detalhes e Interação do Chamado:**
+   * Visualização detalhada do incidente com histórico de interações, chat e registro de ações.
+
+4. **Diagnóstico com IA:**
+   * Análise preditiva de hipóteses de causas prováveis com barras dinâmicas de nível de confiança.
+   * Lista de procedimentos sugeridos interativos com marcação de verificação passo a passo.
+   * Botão de ação rápida para aplicar o diagnóstico diretamente nas notas do chamado.
+
+5. **Base de Conhecimento:**
+   * Listagem e detalhamento de artigos técnicos persistidos no banco de dados.
+   * Formulário para criação de novos artigos com suporte a sumário e conteúdo estruturado.
+
+6. **Gerenciamento de Usuários:**
+   * Tabela interativa com avatares estilizados por iniciais automáticas, perfis de acesso (*Usuário*, *Técnico*, *Administrador*) e status (*Ativo*, *Inativo*).
+   * Modais integrados para **criação** e **edição** completa de dados dos usuários do workspace.
+
+---
+
+## 📂 Arquitetura do Sistema
+
+O sistema adota uma arquitetura modular em camadas, inspirada nos princípios de Domain-Driven Design (DDD), garantindo clara separação de responsabilidades:
+
+* **Frontend (React/Vite):** Interface minimalista e focada na experiência do operador de suporte.
+* **Controllers:** Gerenciam rotas e validações de entrada HTTP.
+* **Services:** Contêm as regras de negócio e a integração com provedores externos (como os módulos de IA).
+* **Repositories / Prisma:** Gerenciam as consultas e mutações seguras via Prisma ORM.
+* **Database (PostgreSQL):** Armazena as entidades centrais (`User`, `Ticket`, `Interaction`, `Category`, `Article`).
+
+---
+
+## 💡 Histórico de Prompts e Engenharia de Contexto
+
+Registro das principais interações e instruções utilizadas durante o desenvolvimento iterativo do projeto:
+
+| Módulo / Etapa | Prompts Utilizados | Refinamento & Decisão de Engenharia |
+| :--- | :--- | :--- |
+| **Setup Base Backend** | *"Atue como um Engenheiro de Software Sênior. Escreva um script/estrutura que inicialize o Node.js com Express, TypeScript, Prisma e organize as pastas src/controllers, src/routes, src/models."* | Aprovado pela padronização rápida da estrutura de pastas, garantindo as dependências exigidas no escopo técnico. |
+| **Integração de Rotas & Base de Conhecimento** | *"Crie as rotas de Artigos conectadas ao Prisma no server.ts e garanta tratamento de erros com fallback seguro para evitar crash no frontend."* | Implementação bem-sucedida de rotas GET/POST com persistência real em PostgreSQL e tratamento robusto de exceções. |
+| **Fila e Painel de Diagnóstico IA** | *"Construa as telas de Fila de Atendimento e Diagnóstico com IA 100% funcionais, com seletores dinâmicos de chamados e barras de confiança estruturadas."* | Desenvolvimento de componentes altamente responsivos integrados com chamadas assíncronas à API backend. |
+| **Gestão de Usuários & Dashboard Geral** | *"Implemente a tela de Usuários com modal de edição funcional e a Visão Geral do Suporte conectada às contagens reais do banco de dados."* | Substituição total de mocks estáticos por métricas calculadas dinamicamente a partir dos registros do Prisma. |
+
+---
+
+## 🐛 Falhas Superadas no Processo
+
+Durante o desenvolvimento do projeto, diagnosticamos e solucionamos os seguintes desafios técnicos:
+
+1. **Erro `Unexpected token '<', "<!DOCTYPE "... is not valid JSON` (Rotas 404):**
+   * *Causa:* Requisições do frontend batiam em rotas não registradas no Express (`/api/articles`, `/api/users`, `/api/ai/diagnose`), fazendo o servidor responder com uma página HTML de erro 404 em vez de JSON.
+   * *Solução:* Mapeamento e registro centralizado de todas as rotas no `server.ts` e inclusão de fallbacks estruturados de segurança.
+2. **Erro `Property 'article' does not exist on type PrismaClient`:**
+   * *Causa:* Desatualização do cache de tipos internos do Prisma Client após a inclusão do model `Article` no `schema.prisma`.
+   * *Solução:* Execução correta de `npx prisma migrate dev` seguida por `npx prisma generate` e reinicialização do servidor TypeScript do editor.
+3. **Erros de Decodificação de Fontes (`OTS parsing error`)**:
+   * *Causa:* Arquivos locais `.ttf` corrompidos na pasta estática que impediam a renderização correta do navegador.
+   * *Solução:* Padronização da tipografia utilizando classes utilitárias e fontes padrão do sistema via Tailwind CSS.
+
+---
+
+## 📦 Como Executar o Projeto Localmente
+
+1. Clone o repositório e acesse a pasta raiz.
+2. Suba a infraestrutura do banco de dados (se aplicável via Docker):
+   ```bash
+   docker-compose up -d
+
+3. Instale as dependências do backend e frontend:
+   ```bash
+   npm install
+
+4. Configure as variáveis de ambiente no arquivo .env com as credenciais do PostgreSQL.
+Execute as migrações e gere os artefatos do Prisma:
+
+   ```bash
+   npx prisma migrate dev
+   npx prisma generate
+
+5. Inicie os servidores de desenvolvimento:
+
+   ```bash
+   npm run dev

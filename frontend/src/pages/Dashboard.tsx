@@ -1,7 +1,25 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { MonitorSpeaker, LogOut, PlusCircle, AlertCircle, CheckCircle2, Clock, Sparkles, X } from 'lucide-react';
-import { httpGet, createTicket } from '../services/api';
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  CalendarDays,
+  Sparkles,
+  ShieldCheck,
+  ArrowRight,
+  ArrowUpRight,
+  Ticket as TicketIcon,
+  Clock3,
+  CircleDot,
+  CheckCircle2,
+  BookOpen,
+  MoreHorizontal,
+  Headphones,
+  Send,
+  Check,
+  Loader2,
+} from "lucide-react";
+import { PageHeading, Button, SectionHeading, ArticleCard } from "../components/nexus-ui";
+import { Stat, TicketTable } from "../components/ticket-components";
+import { httpGet, httpPost } from "../services/api";
 
 interface Ticket {
   id: string;
@@ -13,208 +31,266 @@ interface Ticket {
   createdAt: string;
 }
 
-export default function Dashboard() {
+interface Article {
+  id: string;
+  title: string;
+  category: string;
+  summary?: string;
+  content?: string;
+}
+
+export function Dashboard() {
+  const navigate = useNavigate();
+  const [quick, setQuick] = useState("");
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  
-  // Estados do Modal de Novo Chamado
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const navigate = useNavigate();
+  // Recupera o nome do usuário logado do localStorage se houver
+  const storedUser = localStorage.getItem("@nexus_user");
+  const user = storedUser ? JSON.parse(storedUser) : { name: "Usuário NEXUS" };
 
-  const userStr = localStorage.getItem('@nexus_user');
-  const user = userStr ? JSON.parse(userStr) : null;
-  const token = localStorage.getItem('@nexus_token');
-
+  // Carrega os dados reais do backend ao abrir a página
   useEffect(() => {
-    if (!token) {
-      navigate('/');
-      return;
+    async function loadDashboardData() {
+      try {
+        setLoading(true);
+        // Busca chamados reais e artigos da base de conhecimento do backend
+        const ticketsRes = await httpGet("/api/tickets");
+        setTickets(ticketsRes.data || []);
+
+        // Caso tenha uma rota de artigos, busca; senão, mantém array vazio ou mock leve de apoio
+        try {
+          const articlesRes = await httpGet("/api/articles");
+          setArticles(articlesRes.data || []);
+        } catch {
+          setArticles([]);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar dados do dashboard:", err);
+      } finally {
+        setLoading(false);
+      }
     }
-    fetchTickets();
-  }, [token, navigate]);
 
-  const fetchTickets = async () => {
+    loadDashboardData();
+  }, []);
+
+  // Função para enviar o problema rápido para a IA / Criar Chamado
+  const handleAnalyzeAndCreate = async (descriptionText: string) => {
+    if (!descriptionText.trim()) return;
     try {
-      const response = await httpGet('/api/tickets');
-      setTickets(response.data || []);
+      setSubmitting(true);
+      // Cria o chamado chamando a API real (o backend já passa pelo AIService automaticamente)
+      await httpPost("/api/tickets", { description: descriptionText });
+      
+      // Redireciona para a página de listagem de chamados ou limpa
+      setQuick("");
+      navigate("/meus-chamados");
     } catch (err: any) {
-      setError('Erro ao carregar chamados.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreateTicket = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!description.trim()) return;
-
-    setSubmitting(true);
-    try {
-      await createTicket(description);
-      setDescription('');
-      setIsModalOpen(false);
-      fetchTickets(); // Recarrega a lista de chamados
-    } catch (err: any) {
-      alert(err.message || 'Erro ao criar chamado');
+      alert(err.message || "Erro ao criar chamado");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('@nexus_token');
-    localStorage.removeItem('@nexus_user');
-    navigate('/');
-  };
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <Loader2 size={32} className="spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-600 p-2 rounded-lg text-white">
-              <MonitorSpeaker size={24} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-800">NEXUS Support</h1>
-              <p className="text-xs text-gray-500">Painel de Atendimento</p>
-            </div>
+    <>
+      <PageHeading
+        title={`Olá, ${user.name.split(" ")[0]}`}
+        subtitle="Como podemos ajudar hoje?"
+        action={
+          <div className="date-label">
+            <CalendarDays size={16} />
+            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
-          
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-gray-700">
-              Olá, {user?.name || 'Usuário'}
-            </span>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1 text-red-600 hover:text-red-700 text-sm font-medium px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
-            >
-              <LogOut size={16} />
-              Sair
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Chamados Recentes</h2>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
-          >
-            <PlusCircle size={20} />
-            Novo Chamado
-          </button>
-        </div>
-
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg mb-6 flex items-center gap-2 text-red-700">
-            <AlertCircle size={20} />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {loading ? (
-          <div className="text-center py-12 text-gray-500">Carregando chamados...</div>
-        ) : tickets.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-            <Clock size={48} className="mx-auto text-gray-400 mb-3" />
-            <h3 className="text-lg font-medium text-gray-700">Nenhum chamado encontrado</h3>
-            <p className="text-gray-500 text-sm mt-1">Clique em "Novo Chamado" para registrar uma ocorrência.</p>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {tickets.map((ticket) => (
-                <div key={ticket.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
-                    <div>
-                    <div className="flex items-center gap-3 mb-1">
-                        <span className="font-semibold text-gray-800">{ticket.title}</span>
-                        
-                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium">
-                        {typeof ticket.category === 'object' && ticket.category !== null 
-                            ? ticket.category.name 
-                            : String(ticket.category || 'Geral')}
-                        </span>
-
-                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
-                        ticket.priority === 'CRITICAL' ? 'bg-red-100 text-red-700' :
-                        ticket.priority === 'HIGH' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'
-                        }`}>
-                        {ticket.priority}
-                        </span>
-                    </div>
-                    <p className="text-gray-600 text-sm">{ticket.description}</p>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-400 text-sm">
-                    <CheckCircle2 size={18} className="text-green-500" />
-                    <span>{ticket.status}</span>
-                    </div>
-                </div>
-                ))}
-          </div>
-        )}
-      </main>
-
-      {/* Modal de Novo Chamado com IA */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-            >
-              <X size={20} />
-            </button>
-
-            <div className="flex items-center gap-2 mb-4 text-blue-600">
-              <Sparkles size={24} />
-              <h3 className="text-xl font-bold text-gray-800">Novo Chamado com IA</h3>
-            </div>
-            
-            <p className="text-gray-500 text-sm mb-4">
-              Descreva o seu problema detalhadamente. A nossa inteligência artificial analisará o texto, categorizará o chamado e definirá a prioridade automaticamente.
-            </p>
-
-            <form onSubmit={handleCreateTicket} className="space-y-4">
+        }
+      />
+      <div className="dashboard-grid">
+        <div className="dashboard-primary">
+          {/* Card de Abertura Rápida com IA */}
+          <section className="quick-card">
+            <div className="quick-title">
+              <span className="spark-icon">
+                <Sparkles size={22} />
+              </span>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Descrição do Problema</label>
-                <textarea
-                  rows={4}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Ex: Minha internet caiu na sala 3 e o computador não conecta no Wi-Fi..."
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all text-sm resize-none"
-                  required
-                />
+                <h2>Um problema? Vamos resolver juntos.</h2>
+                <p>Descreva o que está acontecendo. O NEXUS ajuda com o próximo passo.</p>
               </div>
+              <span className="powered">ASSISTIDO POR IA</span>
+            </div>
+            <div className="quick-input">
+              <textarea
+                aria-label="Descreva seu problema"
+                value={quick}
+                onChange={(e) => setQuick(e.target.value)}
+                placeholder="Descreva seu problema... Ex: minha impressora não está imprimindo."
+              />
+              <div className="quick-input-bottom">
+                <span>
+                  <ShieldCheck size={14} />
+                  Você tem o controle. A IA apenas sugere.
+                </span>
+                <Button onClick={() => handleAnalyzeAndCreate(quick)} disabled={submitting}>
+                  {submitting ? <Loader2 size={16} className="spin" /> : <Sparkles size={16} />}
+                  Analisar problema
+                  <ArrowRight size={16} />
+                </Button>
+              </div>
+            </div>
+            <div className="quick-examples">
+              <span>Experimente:</span>
+              {["Impressora não imprime", "Computador lento", "Problema de acesso"].map((s) => (
+                <button key={s} onClick={() => setQuick(s)} type="button">
+                  {s}
+                  <ArrowUpRight size={12} />
+                </button>
+              ))}
+            </div>
+          </section>
 
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
-                >
-                  {submitting ? 'Processando com IA...' : 'Criar Chamado'}
-                </button>
-              </div>
-            </form>
+          {/* Estatísticas Dinâmicas baseadas nos dados do banco */}
+          <div className="stats-grid">
+            <Stat
+              icon={<TicketIcon size={19} />}
+              label="Meus chamados"
+              value={tickets.length.toString()}
+              foot="Total de chamados"
+            />
+            <Stat
+              icon={<Clock3 size={19} />}
+              label="Em andamento"
+              value={tickets.filter((t) => t.status === "IN_PROGRESS" || t.status === "Em andamento").length.toString()}
+              foot="Estamos cuidando disso"
+              tone="blue"
+            />
+            <Stat
+              icon={<CircleDot size={19} />}
+              label="Abertos"
+              value={tickets.filter((t) => t.status === "OPEN" || t.status === "Aberto").length.toString()}
+              foot="Aguardando atendimento"
+              tone="amber"
+            />
+            <Stat
+              icon={<CheckCircle2 size={19} />}
+              label="Resolvidos"
+              value={tickets.filter((t) => t.status === "RESOLVED" || t.status === "Resolvido").length.toString()}
+              foot="Problemas solucionados"
+              tone="green"
+            />
           </div>
+
+          {/* Tabela de Chamados Recentes */}
+          <section className="panel recent-panel">
+            <SectionHeading
+              title="Meus chamados recentes"
+              subtitle="Acompanhe o que está acontecendo com suas solicitações."
+              action={
+                <Link to="/meus-chamados" className="text-link">
+                  Ver todos
+                  <ArrowRight size={14} />
+                </Link>
+              }
+            />
+            <TicketTable
+              tickets={tickets.slice(0, 5)}
+              navigate={navigate}
+              compact
+            />
+          </section>
+
+          {/* Base de Conhecimento (Preview) */}
+          {articles.length > 0 && (
+            <section className="knowledge-preview">
+              <SectionHeading
+                title="Artigos que podem ajudar"
+                subtitle="Às vezes, a solução já está aqui."
+                action={
+                  <Link to="/conhecimento" className="text-link">
+                    Explorar base
+                    <ArrowRight size={14} />
+                  </Link>
+                }
+              />
+              <div className="article-grid">
+                {articles.slice(0, 3).map((a) => (
+                  <ArticleCard key={a.id} article={a} onClick={() => navigate(`/conhecimento/${a.id}`)} />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
-      )}
-    </div>
+
+        {/* Sidebar Lateral */}
+        <aside className="dashboard-side">
+          <section className="assistant-card">
+            <div className="assistant-heading">
+              <span className="spark-icon">
+                <Sparkles size={20} />
+              </span>
+              <h3>Seu suporte, mais inteligente</h3>
+            </div>
+            <p>O NEXUS conecta problemas a soluções para você seguir em frente.</p>
+            <div className="assistant-feature">
+              <span>
+                <Sparkles size={17} />
+              </span>
+              <div>
+                <strong>Menos tempo explicando</strong>
+                <p>A IA organiza seu problema e sugere uma classificação.</p>
+              </div>
+            </div>
+            <div className="assistant-feature">
+              <span>
+                <BookOpen size={17} />
+              </span>
+              <div>
+                <strong>Respostas que já existem</strong>
+                <p>Encontre soluções validadas na base de conhecimento.</p>
+              </div>
+            </div>
+            <div className="assistant-feature">
+              <span>
+                <ShieldCheck size={17} />
+              </span>
+              <div>
+                <strong>A decisão é sempre sua</strong>
+                <p>Aceite, altere ou rejeite as sugestões. Você está no controle.</p>
+              </div>
+            </div>
+            <div className="assistant-foot">
+              <i />
+              Inteligência que apoia. Não substitui.
+            </div>
+          </section>
+
+          <div className="support-card">
+            <span>
+              <Headphones size={22} />
+            </span>
+            <h3>Precisa de uma mão?</h3>
+            <p>Nossa equipe de TI está por aqui.</p>
+            <button onClick={() => navigate("/novo-chamado")} className="text-link" type="button">
+              Abrir um chamado
+              <ArrowRight size={14} />
+            </button>
+            <small>
+              <i />
+              Atendimento · 08h às 18h
+            </small>
+          </div>
+        </aside>
+      </div>
+    </>
   );
 }

@@ -90,3 +90,15 @@ model Interaction {
 
   createdAt DateTime @default(now())
 }
+
+model Article {
+  id          String   @id @default(uuid())
+  title       String
+  category    String
+  summary     String
+  content     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("articles")
+}

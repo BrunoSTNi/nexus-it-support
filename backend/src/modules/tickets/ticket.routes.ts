@@ -10,6 +10,9 @@ ticketRoutes.use(ensureAuthenticated);
 
 ticketRoutes.post('/', ticketController.create);
 ticketRoutes.get('/', ticketController.getAll);
-ticketRoutes.post('/:id/interactions', ticketController.addInteraction);
+
+ticketRoutes.get('/:id', ticketController.getById);                   // Busca detalhes de um chamado específico
+ticketRoutes.post('/:id/interactions', ticketController.addInteraction); // Adiciona mensagem no chat
+ticketRoutes.post('/:id/status', ticketController.updateStatus);         // Altera status (Assumir/Resolver)
 
 export { ticketRoutes };

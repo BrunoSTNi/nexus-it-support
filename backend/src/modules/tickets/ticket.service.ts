@@ -50,6 +50,48 @@ export class TicketService {
     });
   }
 
+  // MÉTODO PARA BUSCAR UM CHAMADO POR ID (Com interações e relações)
+  async findById(id: string) {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id },
+      include: {
+        category: { select: { name: true } },
+        requester: { select: { name: true, email: true } },
+        assignee: { select: { name: true } },
+        interactions: {
+          include: {
+            author: { select: { name: true, role: true } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    if (!ticket) {
+      throw new Error('Chamado não encontrado');
+    }
+
+    return ticket;
+  }
+
+ // MÉTODO PARA ATUALIZAR O STATUS (Assumir / Resolver)
+  async updateStatus(id: string, status: Status) {
+    const ticket = await prisma.ticket.findUnique({ where: { id } });
+    if (!ticket) {
+      throw new Error('Chamado não encontrado');
+    }
+
+    return prisma.ticket.update({
+      where: { id },
+      data: { status },
+      include: {
+        category: { select: { name: true } },
+        requester: { select: { name: true, email: true } },
+        assignee: { select: { name: true } },
+      },
+    });
+  }
+
   async addInteraction(ticketId: string, authorId: string, message: string) {
     const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
     if (!ticket) throw new Error('Chamado não encontrado');
@@ -61,8 +103,8 @@ export class TicketService {
         authorId,
       },
       include: {
-        author: { select: { name: true, role: true } }
-      }
+        author: { select: { name: true, role: true } },
+      },
     });
   }
 }
